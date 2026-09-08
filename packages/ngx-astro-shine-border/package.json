@@ -1,0 +1,29 @@
+{
+  "name": "ngx-astro-shine-border",
+  "version": "1.0.0",
+  "description": "Shine border effect for Astro. Port of @omnedia/ngx-shine-border without Angular runtime.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/ShineBorder.astro",
+    "./ShineBorder.astro": "./src/ShineBorder.astro"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "astro": ">=5.0.0"
+  },
+  "keywords": [
+    "astro",
+    "astro-component",
+    "shine-border",
+    "effect",
+    "border",
+    "animation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wsuites/ngx-ui-to-astro.git"
+  }
+}

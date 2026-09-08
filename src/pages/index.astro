@@ -1,0 +1,289 @@
+---
+import BackgroundBeams from 'ngx-astro-background-beams';
+import DarkVeil from 'ngx-astro-dark-veil';
+import FlickeringGrid from 'ngx-astro-flickering-grid';
+import Highlighter from 'ngx-astro-highlighter';
+import ShineBorder from 'ngx-astro-shine-border';
+import Timeline from 'ngx-astro-timeline';
+import WordMorph from 'ngx-astro-word-morph';
+
+const timelineEntries = [
+  {
+    title: '2022',
+    content:
+      '<p>El proyecto nace como una simple landing page hecha a mano. Actividades de esta fase:</p><ul><li>Diseños de interfaz hechos a mano</li><li>Definición de la estructura de contenido</li><li>Primer deploy estático</li></ul>',
+  },
+  {
+    title: '2023',
+    content:
+      '<p>Migración del proyecto a Astro y primer port de un efecto NGXUI. En esta fase se incluyen:</p><ul><li>Migración a Astro</li><li>Primer port de un efecto NGXUI</li><li>Setup del paquete publicable</li></ul>',
+  },
+  {
+    title: '2024',
+    content:
+      '<p>Publicado como paquete npm reutilizable entre proyectos. Actividades de esta fase:</p><ul><li>Publicación en npm</li><li>Automatización del build</li><li>Documentación de uso en otros proyectos</li></ul>',
+  },
+  {
+    title: '2025',
+    content:
+      '<p>Los 7 efectos convertidos sin una sola línea de Angular en runtime. Actividades de esta fase:</p><ul><li>Beams, Grid, Morph, Highlight</li><li>Timeline, ShineBorder, DarkVeil</li><li>Color lab con todos los ajustes en vivo</li></ul>',
+  },
+];
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NGXUI → Astro · Demo</title>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <BackgroundBeams pathColor="#ffffff12">
+          <div class="hero-content">
+            <p class="eyebrow">ngx-ui → astro</p>
+            <WordMorph words={['beams', 'veil', 'grid', 'morph', 'highlight', 'timeline', 'shine']} />
+            <p class="subtitle">
+              Los 7 efectos de <strong>@omnedia</strong> convertidos a Astro,
+              sin Angular en runtime. <a href="/runtime" class="link">→ Color lab (probar en vivo)</a>
+            </p>
+          </div>
+        </BackgroundBeams>
+      </section>
+
+      <section class="panel section-highlight">
+        <h2>
+          <Highlighter action="underline" color="#7c3aed" strokeWidth={3}>
+            Subrayado
+          </Highlighter>{' '}
+          ·{' '}
+          <Highlighter color="#f59e0b">
+            resaltado
+          </Highlighter>{' '}
+          ·{' '}
+          <Highlighter action="box" color="#10b981">
+            caja
+          </Highlighter>{' '}
+          ·{' '}
+          <Highlighter action="circle" color="#ef4444">
+            círculo
+          </Highlighter>
+        </h2>
+        <p>
+          <Highlighter
+            action="bracket"
+            brackets={['left', 'right']}
+            color="#3b82f6"
+            iterations={1}
+          >
+            rough-notation
+          </Highlighter>{' '}
+          funciona perfecto en Astro con <code>client:load</code> integrado en el
+          propio componente.
+        </p>
+      </section>
+
+      <section class="panel section-grid">
+        <div class="grid-box">
+          <FlickeringGrid color="#60a5fa" maxOpacity={0.25} squareSize={5} gridGap={8}>
+            <div class="grid-inner">
+              <h2>Flickering Grid</h2>
+              <p>Canvas puro, sin dependencias externas.</p>
+            </div>
+          </FlickeringGrid>
+        </div>
+
+        <div class="grid-box">
+          <ShineBorder animationDuration="6s" borderRadius="1rem">
+            <div class="shine-inner">
+              <h2>Shine Border</h2>
+              <p>Solo CSS. El script solo pausa la animación fuera de pantalla.</p>
+            </div>
+          </ShineBorder>
+        </div>
+      </section>
+
+      <section class="panel section-timeline">
+        <h2>Timeline · Left</h2>
+        <Timeline orientation="left" entries={timelineEntries} entryGap="1rem" titleMaxWidth="15rem" />
+      </section>
+
+      <section class="panel section-timeline">
+        <h2>Timeline · Switch</h2>
+        <Timeline orientation="switch" entries={timelineEntries} entryGap="1rem" titleMaxWidth="15rem" />
+      </section>
+
+      <section class="panel section-veil">
+        <DarkVeil
+          scanlineIntensity={0.4}
+          scanlineFrequency={6}
+          noiseIntensity={0.05}
+          speed={0.6}
+          class="veil"
+        >
+          <div class="veil-content">
+            <h2>Dark Veil</h2>
+            <p>WebGL con <code>ogl</code>, shader CPPN completo.</p>
+          </div>
+        </DarkVeil>
+      </section>
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: #05060a;
+    color: #e5e7eb;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  main {
+    display: flex;
+    flex-direction: column;
+  }
+
+  section {
+    position: relative;
+  }
+
+  .hero {
+    height: 100vh;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    height: 100%;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .eyebrow {
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: #9ca3af;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+    max-width: 40rem;
+    color: #9ca3af;
+  }
+
+  .panel {
+    padding: 6rem 2rem;
+  }
+
+  .section-highlight {
+    max-width: 72rem;
+    margin: 0 auto;
+    font-size: 1.15rem;
+    line-height: 1.9;
+  }
+
+  .section-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    max-width: 72rem;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .grid-box {
+    height: 320px;
+  }
+
+  .grid-inner,
+  .shine-inner {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .shine-inner h2 {
+    margin-top: 0;
+  }
+
+  .section-timeline {
+    max-width: 72rem;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .section-timeline .om-timeline-entry-header {
+    height: fit-content;
+  }
+
+  .section-timeline .om-timeline-entry-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.1;
+  }
+
+  .section-timeline .om-timeline-entry-content {
+    max-width: 42rem;
+    color: #cbd5e1;
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+
+  .section-timeline .om-timeline-entry-content ul {
+    margin: 0.75rem 0 0;
+    padding-left: 1.25rem;
+    color: #9ca3af;
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+
+  .section-timeline .om-timeline-entry-content p {
+    margin: 0;
+  }
+
+  .section-veil {
+    min-height: 100vh;
+  }
+
+  .veil {
+    min-height: 100vh;
+  }
+
+  .veil-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+  }
+
+  code {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 0.25rem;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.9em;
+  }
+
+  .link {
+    color: #7c3aed;
+  }
+</style>

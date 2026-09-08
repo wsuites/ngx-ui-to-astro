@@ -1,0 +1,31 @@
+{
+  "name": "ngx-astro-background-beams",
+  "version": "1.0.0",
+  "description": "Background beams effect for Astro. Port of @omnedia/ngx-background-beams without Angular runtime.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/BackgroundBeams.astro",
+    "./BackgroundBeams.astro": "./src/BackgroundBeams.astro"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "astro": ">=5.0.0"
+  },
+  "keywords": [
+    "astro",
+    "astro-component",
+    "background",
+    "beams",
+    "effect",
+    "animation",
+    "canvas",
+    "svgl"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wsuites/ngx-ui-to-astro.git"
+  }
+}

@@ -1,0 +1,552 @@
+---
+import BackgroundBeams from 'ngx-astro-background-beams';
+import DarkVeil from 'ngx-astro-dark-veil';
+import FlickeringGrid from 'ngx-astro-flickering-grid';
+import Highlighter from 'ngx-astro-highlighter';
+import ShineBorder from 'ngx-astro-shine-border';
+import Timeline from 'ngx-astro-timeline';
+import WordMorph from 'ngx-astro-word-morph';
+
+const timelineEntries = [
+  {
+    title: '2022',
+    content:
+      '<p>El proyecto nace como una simple landing page hecha a mano. Actividades de esta fase:</p><ul><li>Diseños de interfaz hechos a mano</li><li>Definición de la estructura de contenido</li><li>Primer deploy estático</li></ul>',
+  },
+  {
+    title: '2023',
+    content:
+      '<p>Migración del proyecto a Astro y primer port de un efecto NGXUI. En esta fase se incluyen:</p><ul><li>Migración a Astro</li><li>Primer port de un efecto NGXUI</li><li>Setup del paquete publicable</li></ul>',
+  },
+  {
+    title: '2024',
+    content:
+      '<p>Publicado como paquete npm reutilizable entre proyectos. Actividades de esta fase:</p><ul><li>Publicación en npm</li><li>Automatización del build</li><li>Documentación de uso en otros proyectos</li></ul>',
+  },
+  {
+    title: '2025',
+    content:
+      '<p>Los 7 efectos convertidos sin una sola línea de Angular en runtime. Actividades de esta fase:</p><ul><li>Beams, Grid, Morph, Highlight</li><li>Timeline, ShineBorder, DarkVeil</li><li>Color lab con todos los ajustes en vivo</li></ul>',
+  },
+];
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NGXUI → Astro · Color lab</title>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="controls">
+        <p class="crumb"><a href="/">← demo base</a></p>
+        <h1>Color lab</h1>
+        <p class="hint">Cambia colores en vivo y prueba cada efecto.</p>
+
+        <section class="group" data-group="beams">
+          <h2>BackgroundBeams</h2>
+          <label class="check">
+            <input type="checkbox" id="beams-resume" />
+            Pausar/reanudar (en vez de reiniciar de 0)
+          </label>
+          <label>Gradiente A <input type="color" id="beams-c0" value="#18CCFC" /></label>
+          <label>Gradiente B <input type="color" id="beams-c1" value="#6344F5" /></label>
+          <label>Gradiente C <input type="color" id="beams-c2" value="#AE48FF" /></label>
+          <label>Path <input type="color" id="beams-path" value="#000000" /></label>
+        </section>
+
+        <section class="group" data-group="grid">
+          <h2>FlickeringGrid</h2>
+          <label>Color <input type="color" id="grid-color" value="#6B7280" /></label>
+          <label>Opacidad máx <input type="range" id="grid-max" min="0" max="1" step="0.05" value="0.3" /> <output data-out="grid-max">0.3</output></label>
+          <label>Flicker <input type="range" id="grid-flicker" min="0" max="1" step="0.05" value="0.3" /> <output data-out="grid-flicker">0.3</output></label>
+          <label>Square <input type="range" id="grid-square" min="2" max="12" step="1" value="5" /> <output data-out="grid-square">5</output></label>
+          <label>Gap <input type="range" id="grid-gap" min="2" max="20" step="1" value="8" /> <output data-out="grid-gap">8</output></label>
+        </section>
+
+        <section class="group" data-group="hl">
+          <h2>Highlighter</h2>
+          <label>Color <input type="color" id="hl-color" value="#d1daff" /></label>
+          <label>Acción
+            <select id="hl-action">
+              <option value="highlight" selected>highlight</option>
+              <option value="underline">underline</option>
+              <option value="box">box</option>
+              <option value="circle">circle</option>
+              <option value="strike-through">strike-through</option>
+              <option value="crossed-off">crossed-off</option>
+              <option value="bracket">bracket</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="group" data-group="shine">
+          <h2>ShineBorder</h2>
+          <label>From <input type="color" id="shine-c0" value="#ffaa40" /></label>
+          <label>Middle <input type="color" id="shine-c1" value="#fe8fb5" /></label>
+          <label>To <input type="color" id="shine-c2" value="#9c40ff" /></label>
+          <label>Border <input type="color" id="shine-border" value="#000000" /></label>
+          <label>Duración <input type="range" id="shine-dur" min="2" max="30" step="1" value="6" /> <output data-out="shine-dur">6</output>s</label>
+        </section>
+
+        <section class="group" data-group="tl">
+          <h2>Timeline</h2>
+          <label>Path <input type="color" id="tl-path" value="#e2e8f0" /></label>
+          <label>Gradiente inicio <input type="color" id="tl-g0" value="#3b82f6" /></label>
+          <label>Gradiente fin <input type="color" id="tl-g1" value="#7f00ff" /></label>
+        </section>
+
+        <section class="group" data-group="veil">
+          <h2>DarkVeil</h2>
+          <label>Hue shift <input type="range" id="veil-hue" min="-180" max="180" step="1" value="0" /> <output data-out="veil-hue">0</output>°</label>
+          <label>Speed <input type="range" id="veil-speed" min="0.1" max="3" step="0.1" value="0.6" /> <output data-out="veil-speed">0.6</output></label>
+          <label>Noise <input type="range" id="veil-noise" min="0" max="0.5" step="0.01" value="0.05" /> <output data-out="veil-noise">0.05</output></label>
+          <label>Scanline <input type="range" id="veil-scan" min="0" max="1" step="0.05" value="0.4" /> <output data-out="veil-scan">0.4</output></label>
+          <label>Warp <input type="range" id="veil-warp" min="0" max="1" step="0.05" value="0" /> <output data-out="veil-warp">0</output></label>
+        </section>
+      </aside>
+
+      <main class="stage">
+        <section class="demo demo-beams" id="demo-beams">
+          <BackgroundBeams pathColor="#ffffff12">
+            <div class="demo-beams-inner">
+              <h2>BackgroundBeams</h2>
+              <p>Cambia los colores del gradiente y de los paths en el panel.</p>
+            </div>
+          </BackgroundBeams>
+        </section>
+
+        <section class="demo demo-grid" id="demo-grid">
+          <FlickeringGrid color="#60a5fa" maxOpacity={0.25} squareSize={5} gridGap={8}>
+            <div class="demo-card-inner">
+              <h2>FlickeringGrid</h2>
+              <p>Color, opacidad, densidad y parpadeo en tiempo real.</p>
+            </div>
+          </FlickeringGrid>
+        </section>
+
+        <section class="demo demo-hl" id="demo-highlighter">
+          <p class="hl-line">
+            <Highlighter>Esto es un resaltado</Highlighter> que puedes
+            recolorear y cambiar entre <Highlighter>todas</Highlighter> las anotaciones de
+            <Highlighter>rough-notation</Highlighter> desde el panel.
+          </p>
+        </section>
+
+        <section class="demo demo-shine" id="demo-shine">
+          <ShineBorder animationDuration="6s" borderRadius="1rem">
+            <div class="demo-card-inner">
+              <h2>ShineBorder</h2>
+              <p>Tres colores de gradiente + color de borde + duración.</p>
+            </div>
+          </ShineBorder>
+        </section>
+
+        <section class="demo demo-tl" id="demo-timeline">
+          <h2 class="demo-title">Timeline · Left</h2>
+          <p class="demo-sub">La línea se dibuja según avanzas; el título queda fijo mientras scrolleas.</p>
+          <Timeline
+            orientation="left"
+            entries={timelineEntries}
+            entryGap="1rem"
+            titleMaxWidth="15rem"
+          />
+        </section>
+
+        <section class="demo demo-tl" id="demo-timeline-switch">
+          <h2 class="demo-title">Timeline · Switch</h2>
+          <p class="demo-sub">Los años alternan de lado y la línea serpentea en S dibujándose con el scroll.</p>
+          <Timeline
+            orientation="switch"
+            entries={timelineEntries}
+            entryGap="1rem"
+            titleMaxWidth="15rem"
+          />
+        </section>
+
+        <section class="demo demo-veil" id="demo-veil">
+          <DarkVeil
+            scanlineIntensity={0.4}
+            scanlineFrequency={6}
+            noiseIntensity={0.05}
+            speed={0.6}
+            class="veil-box"
+          >
+            <div class="demo-veil-inner">
+              <h2>DarkVeil</h2>
+              <p>Hue shift rota toda la paleta del shader CPPN en vivo.</p>
+            </div>
+          </DarkVeil>
+        </section>
+
+        <section class="demo demo-wm" id="demo-wm">
+          <WordMorph words={['beams', 'veil', 'grid', 'morph', 'highlight', 'timeline', 'shine']} />
+          <p class="wm-note">WordMorph no expone color en el original NGXUI; hereda el del texto.</p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
+
+<style is:global>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: #05060a;
+    color: #e5e7eb;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    min-height: 100vh;
+  }
+
+  .controls {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 1.5rem;
+    background: #0b0d14;
+    border-right: 1px solid #1f2430;
+  }
+
+  .controls h1 {
+    font-size: 1.4rem;
+    margin: 0.5rem 0 0.25rem;
+  }
+
+  .controls .hint {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    margin: 0 0 1.5rem;
+  }
+
+  .crumb a {
+    color: #7c3aed;
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+
+  .group {
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid #1f2430;
+  }
+
+  .group h2 {
+    font-size: 0.95rem;
+    margin: 0 0 0.75rem;
+    color: #cbd5e1;
+  }
+
+  .group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-bottom: 0.4rem;
+  }
+
+  .group label.check {
+    color: #cbd5e1;
+    margin-bottom: 0.75rem;
+  }
+
+  .group input[type='color'] {
+    width: 42px;
+    height: 26px;
+    border: 1px solid #2b3242;
+    border-radius: 4px;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .group input[type='range'] {
+    flex: 1;
+  }
+
+  .group select {
+    flex: 1;
+    background: #0f1320;
+    color: #e5e7eb;
+    border: 1px solid #2b3242;
+    border-radius: 4px;
+    padding: 0.25rem;
+  }
+
+  .group output {
+    min-width: 3ch;
+    text-align: right;
+  }
+
+  .stage {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 1100px;
+  }
+
+  .demo {
+    position: relative;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid #1f2430;
+  }
+
+  .demo-beams {
+    height: 60vh;
+  }
+
+  .demo-beams-inner {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .demo-grid {
+    height: 340px;
+  }
+
+  .demo-card-inner {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.5rem;
+  }
+
+  .demo-hl {
+    padding: 3rem;
+    font-size: 1.35rem;
+    line-height: 1.8;
+    background: #0a0c12;
+  }
+
+  .hl-line {
+    margin: 0;
+  }
+
+  .demo-shine {
+    height: 260px;
+    background: #0a0c12;
+  }
+
+  .demo-tl {
+    padding: 1rem 2rem 2rem;
+    background: #0a0c12;
+    overflow: visible;
+  }
+
+  .demo-title {
+    padding: 1.5rem 0 0;
+    margin: 0;
+  }
+
+  .demo-sub {
+    margin: 0.5rem 0 2rem;
+    color: #9ca3af;
+    font-size: 0.95rem;
+  }
+
+  .demo-tl .om-timeline-entry-header {
+    height: fit-content;
+  }
+
+  .demo-tl .om-timeline-entry-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.1;
+  }
+
+  .demo-tl .om-timeline-entry-content {
+    max-width: 42rem;
+    color: #cbd5e1;
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+
+  .demo-tl .om-timeline-entry-content ul {
+    margin: 0.75rem 0 0;
+    padding-left: 1.25rem;
+    color: #9ca3af;
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+
+  .demo-tl .om-timeline-entry-content p {
+    margin: 0;
+  }
+
+  .demo-veil {
+    min-height: 70vh;
+    background: #0a0c12;
+  }
+
+  .veil-box {
+    min-height: 70vh;
+  }
+
+  .demo-veil-inner {
+    position: relative;
+    z-index: 1;
+    height: 70vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .demo-wm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem;
+    background: #0a0c12;
+    text-align: center;
+  }
+
+  .wm-note {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: 2rem 0 0;
+  }
+
+  @media (max-width: 820px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+    .controls {
+      position: static;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid #1f2430;
+    }
+  }
+</style>
+
+<script>
+  const $ = <T = HTMLInputElement,>(sel: string, root: ParentNode = document): T =>
+    root.querySelector(sel) as T;
+
+  const out = (id: string): void => {
+    const input = $(`#${id}`);
+    const output = $(`[data-out="${id}"]`);
+    const sync = () => {
+      output.textContent = input.value;
+    };
+    input.addEventListener('input', sync);
+    sync();
+  };
+
+  ['grid-max', 'grid-flicker', 'grid-square', 'grid-gap', 'shine-dur', 'veil-hue', 'veil-speed', 'veil-noise', 'veil-scan', 'veil-warp'].forEach(out);
+
+  const applyTo = (selector: string, fn: (el: HTMLElement) => void): void => {
+    document.querySelectorAll<HTMLElement>(selector).forEach(fn);
+  };
+
+  // BackgroundBeams
+  const updateBeams = () => {
+    const colors = JSON.stringify([
+      $('#beams-c0').value,
+      $('#beams-c1').value,
+      $('#beams-c2').value,
+    ]);
+    applyTo('#demo-beams [data-om-beams]', (el) => {
+      el.setAttribute('data-colors', colors);
+      el.setAttribute('data-path-color', $('#beams-path').value);
+      el.setAttribute('data-resume', $('#beams-resume').checked ? 'true' : 'false');
+    });
+  };
+  ['beams-c0', 'beams-c1', 'beams-c2', 'beams-path', 'beams-resume'].forEach((id) => $(`#${id}`).addEventListener('input', updateBeams));
+  $('#beams-resume').addEventListener('change', updateBeams);
+
+  // FlickeringGrid
+  const updateGrid = () => {
+    applyTo('#demo-grid [data-om-flickering-grid]', (el) => {
+      el.setAttribute('data-color', $('#grid-color').value);
+      el.setAttribute('data-max-opacity', $('#grid-max').value);
+      el.setAttribute('data-flicker-chance', $('#grid-flicker').value);
+      el.setAttribute('data-square-size', $('#grid-square').value);
+      el.setAttribute('data-grid-gap', $('#grid-gap').value);
+    });
+  };
+  ['grid-color', 'grid-max', 'grid-flicker', 'grid-square', 'grid-gap'].forEach((id) => $(`#${id}`).addEventListener('input', updateGrid));
+
+  // Highlighter
+  const updateHl = () => {
+    const opts = JSON.stringify({
+      color: $('#hl-color').value,
+      action: $('#hl-action').value,
+    });
+    applyTo('#demo-highlighter [data-om-highlighter]', (el) => {
+      el.setAttribute('data-options', opts);
+    });
+  };
+  ['hl-color', 'hl-action'].forEach((id) => $(`#${id}`).addEventListener('input', updateHl));
+
+  // ShineBorder
+  const updateShine = () => {
+    applyTo('#demo-shine [data-om-shine-border]', (el) => {
+      const s = el.style;
+      s.setProperty('--color-from', $('#shine-c0').value);
+      s.setProperty('--color-middle', $('#shine-c1').value);
+      s.setProperty('--color-to', $('#shine-c2').value);
+      s.setProperty('--border-color', $('#shine-border').value);
+      s.setProperty('--animation-duration', `${$('#shine-dur').value}s`);
+    });
+  };
+  ['shine-c0', 'shine-c1', 'shine-c2', 'shine-border', 'shine-dur'].forEach((id) => $(`#${id}`).addEventListener('input', updateShine));
+
+  // Timeline
+  const updateTl = () => {
+    const colors = JSON.stringify([$('#tl-g0').value, $('#tl-g1').value]);
+    applyTo('#demo-timeline [data-om-timeline], #demo-timeline-switch [data-om-timeline]', (el) => {
+      el.setAttribute('data-path-color', $('#tl-path').value);
+      el.setAttribute('data-gradient-colors', colors);
+    });
+  };
+  ['tl-path', 'tl-g0', 'tl-g1'].forEach((id) => $(`#${id}`).addEventListener('input', updateTl));
+
+  // DarkVeil
+  const updateVeil = () => {
+    applyTo('#demo-veil [data-om-dark-veil]', (el) => {
+      el.setAttribute('data-hue-shift', $('#veil-hue').value);
+      el.setAttribute('data-speed', $('#veil-speed').value);
+      el.setAttribute('data-noise-intensity', $('#veil-noise').value);
+      el.setAttribute('data-scanline-intensity', $('#veil-scan').value);
+      el.setAttribute('data-warp-amount', $('#veil-warp').value);
+    });
+  };
+  ['veil-hue', 'veil-speed', 'veil-noise', 'veil-scan', 'veil-warp'].forEach((id) => $(`#${id}`).addEventListener('input', updateVeil));
+
+  // Sincroniza el estado inicial del panel con los componentes.
+  updateBeams();
+  updateGrid();
+  updateHl();
+  updateShine();
+  updateTl();
+  updateVeil();
+</script>

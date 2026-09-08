@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+npm-debug.log*
+packages/*/node_modules
+
+# tooling / agent artifacts
+.omo/
+.opencode/
+.codegraph/
+.playwright-mcp/
+*.log
+*.png
+y/

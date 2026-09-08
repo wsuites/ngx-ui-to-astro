@@ -1,0 +1,214 @@
+---
+interface Props {
+  squareSize?: number;
+  gridGap?: number;
+  flickerChance?: number;
+  color?: string;
+  maxOpacity?: number;
+  class?: string;
+}
+
+const {
+  squareSize = 4,
+  gridGap = 6,
+  flickerChance = 0.3,
+  color = '#6B7280',
+  maxOpacity = 0.3,
+  class: className = '',
+} = Astro.props;
+---
+
+<div
+  class:list={['om-flickering-grid', className]}
+  data-om-flickering-grid
+  data-square-size={squareSize}
+  data-grid-gap={gridGap}
+  data-flicker-chance={flickerChance}
+  data-color={color}
+  data-max-opacity={maxOpacity}
+>
+  <div class="om-flickering-grid-background" data-om-fg-bg>
+    <canvas class="om-flickering-grid-canvas" data-om-fg-canvas width="100" height="100"></canvas>
+  </div>
+  <div class="om-flickering-grid-content">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .om-flickering-grid {
+    position: relative;
+    width: 100%;
+    height: 100%;
+
+    .om-flickering-grid-background {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+
+      canvas {
+        pointer-events: none;
+        z-index: 0;
+        position: absolute;
+        inset: 0;
+      }
+    }
+
+    .om-flickering-grid-content {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const wrappers = document.querySelectorAll<HTMLElement>('[data-om-flickering-grid]');
+    if (!wrappers.length) return;
+
+    wrappers.forEach((wrapper) => {
+      const background = wrapper.querySelector<HTMLElement>('[data-om-fg-bg]')!;
+      const canvas = wrapper.querySelector<HTMLCanvasElement>('[data-om-fg-canvas]')!;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+
+      const config = {
+        squareSize: Number(wrapper.dataset.squareSize) || 4,
+        gridGap: Number(wrapper.dataset.gridGap) || 6,
+        flickerChance: Number(wrapper.dataset.flickerChance) || 0.3,
+        color: wrapper.dataset.color || '#6B7280',
+        maxOpacity: Number(wrapper.dataset.maxOpacity) || 0.3,
+      };
+
+      let cols = 0;
+      let rows = 0;
+      let squares: Float32Array = new Float32Array(0);
+      let lastAnimationTime = 0;
+      let memoizedColor = 'rgba(0, 0, 0,';
+      let isInView = false;
+      let animating = false;
+
+      function setMemoizedColor(): void {
+        const probe = document.createElement('canvas');
+        probe.width = probe.height = 1;
+        const pctx = probe.getContext('2d', { willReadFrequently: true });
+        if (!pctx) return;
+        pctx.fillStyle = config.color;
+        pctx.fillRect(0, 0, 1, 1);
+        const [r, g, b] = pctx.getImageData(0, 0, 1, 1).data;
+        memoizedColor = `rgba(${r}, ${g}, ${b},`;
+      }
+
+      function setupCanvas(): void {
+        cols = Math.ceil(canvas.width / (config.squareSize + config.gridGap));
+        rows = Math.ceil(canvas.height / (config.squareSize + config.gridGap));
+        squares = new Float32Array(cols * rows);
+        for (let i = 0; i < squares.length; i++) {
+          squares[i] = Math.random() * config.maxOpacity;
+        }
+      }
+
+      function setCanvasSize(): void {
+        canvas.width = background.getBoundingClientRect().width;
+        canvas.height = background.getBoundingClientRect().height;
+        setupCanvas();
+      }
+
+      function updateSquares(deltaTime: number): void {
+        for (let i = 0; i < squares.length; i++) {
+          if (Math.random() < config.flickerChance * deltaTime) {
+            squares[i] = Math.random() * config.maxOpacity;
+          }
+        }
+      }
+
+      function drawGrid(): void {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'transparent';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < cols; i++) {
+          for (let j = 0; j < rows; j++) {
+            const opacity = squares[i * rows + j];
+            ctx.fillStyle = `${memoizedColor}${opacity})`;
+            ctx.fillRect(
+              i * (config.squareSize + config.gridGap),
+              j * (config.squareSize + config.gridGap),
+              config.squareSize,
+              config.squareSize,
+            );
+          }
+        }
+      }
+
+      function animateCanvas(time: number): void {
+        if (!isInView) {
+          animating = false;
+          return;
+        }
+        animating = true;
+        const deltaTime = (time - lastAnimationTime) / 1000;
+        lastAnimationTime = time;
+        updateSquares(deltaTime);
+        drawGrid();
+        requestAnimationFrame(animateCanvas);
+      }
+
+      const onResize = () => setCanvasSize();
+
+      setCanvasSize();
+      setMemoizedColor();
+      window.addEventListener('resize', onResize);
+
+      if (!animating) {
+        requestAnimationFrame(animateCanvas);
+      }
+
+      const observer = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting && !isInView) {
+          isInView = true;
+          if (!animating) {
+            requestAnimationFrame(animateCanvas);
+          }
+        } else if (!entry.isIntersecting) {
+          isInView = false;
+        }
+      });
+      observer.observe(canvas);
+
+      const attrObserver = new MutationObserver((muts) => {
+        let size = false;
+        let colorChanged = false;
+        for (const m of muts) {
+          if (m.attributeName === 'data-square-size' || m.attributeName === 'data-grid-gap') {
+            size = true;
+          } else if (m.attributeName === 'data-color') {
+            colorChanged = true;
+          } else if (m.attributeName === 'data-max-opacity' || m.attributeName === 'data-flicker-chance') {
+            size = true;
+          }
+        }
+        config.squareSize = Number(wrapper.dataset.squareSize) || 4;
+        config.gridGap = Number(wrapper.dataset.gridGap) || 6;
+        config.flickerChance = Number(wrapper.dataset.flickerChance) || 0.3;
+        config.color = wrapper.dataset.color || '#6B7280';
+        config.maxOpacity = Number(wrapper.dataset.maxOpacity) || 0.3;
+        if (size) setCanvasSize();
+        if (colorChanged) setMemoizedColor();
+      });
+      attrObserver.observe(wrapper, {
+        attributes: true,
+        attributeFilter: [
+          'data-color',
+          'data-max-opacity',
+          'data-square-size',
+          'data-grid-gap',
+          'data-flicker-chance',
+        ],
+      });
+    });
+  })();
+</script>

@@ -1,0 +1,129 @@
+---
+type AnnotationAction =
+  | 'highlight'
+  | 'underline'
+  | 'box'
+  | 'circle'
+  | 'strike-through'
+  | 'crossed-off'
+  | 'bracket';
+
+type BracketType = 'left' | 'right' | 'top' | 'bottom';
+
+interface Props {
+  action?: AnnotationAction;
+  color?: string;
+  strokeWidth?: number;
+  animationDuration?: number;
+  iterations?: number;
+  padding?: number;
+  multiline?: boolean;
+  animateOnlyOnce?: boolean;
+  brackets?: BracketType | BracketType[];
+  animate?: boolean;
+  class?: string;
+}
+
+const {
+  action = 'highlight',
+  color = '#d1daff',
+  strokeWidth = 1.5,
+  animationDuration = 600,
+  iterations = 2,
+  padding = 2,
+  multiline = true,
+  animateOnlyOnce = false,
+  brackets = ['left', 'right'],
+  animate = true,
+  class: className = '',
+} = Astro.props;
+
+const options = JSON.stringify({
+  action,
+  color,
+  strokeWidth,
+  animationDuration,
+  iterations,
+  padding,
+  multiline,
+  brackets,
+  animateOnlyOnce,
+  animate,
+});
+---
+
+<span
+  class:list={['om-highlighter', className]}
+  data-om-highlighter
+  data-options={options}
+><slot /></span>
+
+<style>
+  .om-highlighter {
+    position: relative;
+    display: inline-block;
+    background-color: transparent;
+  }
+</style>
+
+<script>
+  import { annotate } from 'rough-notation';
+
+  (() => {
+    const wrappers = document.querySelectorAll<HTMLElement>('[data-om-highlighter]');
+    if (!wrappers.length) return;
+
+    wrappers.forEach((wrapper) => {
+      const options = JSON.parse(wrapper.dataset.options!);
+
+      let animatedOnce = false;
+      let isInView = false;
+
+      let annotation = annotate(wrapper, {
+        type: options.action,
+        color: options.color,
+        strokeWidth: options.strokeWidth,
+        animationDuration: options.animationDuration,
+        iterations: options.iterations,
+        padding: options.padding,
+        multiline: options.multiline,
+        brackets: options.brackets,
+        animate: options.animate,
+      });
+
+      function recreate(): void {
+        annotation.remove();
+        annotation = annotate(wrapper, {
+          type: options.action,
+          color: options.color,
+          strokeWidth: options.strokeWidth,
+          animationDuration: options.animationDuration,
+          iterations: options.iterations,
+          padding: options.padding,
+          multiline: options.multiline,
+          brackets: options.brackets,
+          animate: options.animate,
+        });
+        if (isInView) annotation.show();
+      }
+
+      const observer = new IntersectionObserver(([entry]) => {
+        isInView = entry.isIntersecting;
+        if (entry.isIntersecting && (!options.animateOnlyOnce || (options.animateOnlyOnce && !animatedOnce))) {
+          annotation.show();
+          animatedOnce = true;
+        } else if (!options.animateOnlyOnce) {
+          annotation.hide();
+        }
+      });
+      observer.observe(wrapper);
+
+      const attrObserver = new MutationObserver(() => {
+        const next = JSON.parse(wrapper.dataset.options!);
+        Object.assign(options, next);
+        recreate();
+      });
+      attrObserver.observe(wrapper, { attributes: true, attributeFilter: ['data-options'] });
+    });
+  })();
+</script>

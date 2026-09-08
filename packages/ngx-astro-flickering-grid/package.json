@@ -1,0 +1,30 @@
+{
+  "name": "ngx-astro-flickering-grid",
+  "version": "1.0.0",
+  "description": "Flickering grid effect for Astro. Port of @omnedia/ngx-flickering-grid without Angular runtime.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/FlickeringGrid.astro",
+    "./FlickeringGrid.astro": "./src/FlickeringGrid.astro"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "astro": ">=5.0.0"
+  },
+  "keywords": [
+    "astro",
+    "astro-component",
+    "grid",
+    "flickering",
+    "effect",
+    "animation",
+    "canvas"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wsuites/ngx-ui-to-astro.git"
+  }
+}

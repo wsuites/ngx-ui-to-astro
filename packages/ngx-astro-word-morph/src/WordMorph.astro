@@ -1,0 +1,179 @@
+---
+interface Props {
+  /** Array of words to animate through. */
+  words: string[];
+  /** Duration of the morph animation in ms. */
+  morphDuration?: number;
+  /** Delay between words in ms. */
+  morphDelay?: number;
+  class?: string;
+}
+
+const {
+  words,
+  morphDuration = 1000,
+  morphDelay = 5000,
+  class: className = '',
+} = Astro.props;
+
+const uid = Math.random().toString(36).slice(2, 10);
+const filterId = `wm-${uid}-threshold`;
+---
+
+<div
+  class:list={['om-word-morph', className]}
+  data-om-word-morph
+  data-uid={uid}
+  data-words={JSON.stringify(words)}
+  data-morph-duration={morphDuration}
+  data-morph-delay={morphDelay}
+>
+  <div class="words" data-om-wm-words>
+    <p class="text1" data-om-wm-text1></p>
+    <p class="text2" data-om-wm-text2></p>
+    <p class="accessibility" aria-live="polite" data-om-wm-a11y></p>
+  </div>
+
+  <svg class="filters" aria-hidden="true">
+    <defs>
+      <filter id={filterId}>
+        <feColorMatrix
+          in="SourceGraphic"
+          type="matrix"
+          values="1 0 0 0 0
+                  0 1 0 0 0
+                  0 0 1 0 0
+                  0 0 0 255 -140"
+        />
+      </filter>
+    </defs>
+  </svg>
+</div>
+
+<style>
+  .om-word-morph {
+    width: fit-content;
+    position: relative;
+    font-size: 8rem;
+
+    .words {
+      position: relative;
+      margin: auto;
+      width: fit-content;
+      height: fit-content;
+      top: 0;
+      bottom: 0;
+
+      transition: 1s filter linear, 1s -webkit-filter linear;
+
+      p {
+        margin: 0;
+        font-size: inherit;
+      }
+
+      .accessibility {
+        font-size: inherit;
+        visibility: hidden;
+      }
+
+      .text1,
+      .text2 {
+        position: absolute;
+        width: 100%;
+        display: inline-block;
+        user-select: none;
+        font-size: inherit;
+      }
+    }
+
+    .filters {
+      position: absolute;
+      width: 0;
+      height: 0;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const wrappers = document.querySelectorAll<HTMLElement>('[data-om-word-morph]');
+    if (!wrappers.length) return;
+
+    wrappers.forEach((wrapper) => {
+      const uid = wrapper.dataset.uid!;
+      const words = JSON.parse(wrapper.dataset.words!) as string[];
+      const morphDuration = Number(wrapper.dataset.morphDuration) || 1000;
+      const morphDelay = Number(wrapper.dataset.morphDelay) || 5000;
+
+      if (!words || words.length === 0) {
+        throw new Error('om-word-morph: No words were passed to the component!');
+      }
+
+      const list = words.length === 1 ? [...words, ...words] : words;
+
+      const wordsEl = wrapper.querySelector<HTMLElement>('[data-om-wm-words]')!;
+      const text1 = wrapper.querySelector<HTMLElement>('[data-om-wm-text1]')!;
+      const text2 = wrapper.querySelector<HTMLElement>('[data-om-wm-text2]')!;
+      const a11y = wrapper.querySelector<HTMLElement>('[data-om-wm-a11y]')!;
+
+      let isInView = false;
+      // Original: el setter de [words] deja textIndex en words.length - 1.
+      let textIndex = words.length - 1;
+
+      const fontSize = parseFloat(getComputedStyle(text1).getPropertyValue('font-size'));
+      const filterRef = `url(#wm-${uid}-threshold)`;
+
+      function setMorph(fraction: number): void {
+        text2.style.filter = `blur(${Math.min(8 / fraction - 8, fontSize)}px)`;
+        text2.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
+
+        fraction = 1 - fraction;
+        text1.style.filter = `blur(${Math.min(8 / fraction - 8, fontSize)}px)`;
+        text1.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
+      }
+
+      function morphText(): void {
+        let fraction = 0;
+
+        wordsEl.style.filter = `${filterRef} blur(0.6px)`;
+
+        text1.textContent = list[textIndex % list.length];
+        text2.textContent = list[(textIndex + 1) % list.length];
+
+        const tickMs = morphDuration / 100;
+        const timer = setInterval(() => {
+          fraction += 1;
+          setMorph(fraction / 100);
+
+          if (fraction === 50) {
+            a11y.textContent = list[(textIndex + 1) % list.length];
+          }
+
+          if (fraction === 100) {
+            clearInterval(timer);
+            textIndex++;
+            wordsEl.style.filter = '';
+          }
+        }, tickMs);
+      }
+
+      text2.style.filter = '';
+      text2.style.opacity = '100%';
+      text1.style.filter = '';
+      text1.style.opacity = '0%';
+      // Original: activeWord inicial = words[1] (después de duplicar si hay 1).
+      a11y.textContent = list[1];
+
+      morphText();
+
+      setInterval(() => {
+        if (isInView) morphText();
+      }, morphDelay + morphDuration);
+
+      const observer = new IntersectionObserver(([entry]) => {
+        isInView = entry.isIntersecting;
+      });
+      observer.observe(wrapper);
+    });
+  })();
+</script>

@@ -1,0 +1,505 @@
+---
+interface Props {
+  /** Exactly 3 colors for the beam gradient. */
+  gradientColorValues?: [string, string, string];
+  /** Color of the path lines. */
+  pathColor?: string;
+  /** Number of animated paths to generate. */
+  pathQuantity?: number;
+  /**
+   * false (default): 1:1 with NGXUI — animation restarts from 0 on every re-enter.
+   * true: animation pauses when leaving the viewport and resumes in place.
+   */
+  resume?: boolean;
+  class?: string;
+}
+
+const {
+  gradientColorValues = ['#18CCFC', '#6344F5', '#AE48FF'],
+  pathColor = '#00000025',
+  pathQuantity = 50,
+  resume = false,
+  class: className = '',
+} = Astro.props;
+
+if (gradientColorValues.length !== 3) {
+  throw new Error('om-background-beams: gradient colors need to be exactly 3 values.');
+}
+
+const uid = Math.random().toString(36).slice(2, 10);
+const radialId = `paint0_radial_${uid}`;
+---
+
+<div
+  class:list={['om-background-beams', className]}
+  data-om-beams
+  data-uid={uid}
+  data-colors={JSON.stringify(gradientColorValues)}
+  data-path-color={pathColor}
+  data-path-qty={pathQuantity}
+  data-resume={resume}
+>
+  <div class="om-background-beams-background">
+    <div class="custom-svg-wrapper">
+      <svg
+        class="custom-svg"
+        width="100%"
+        height="100%"
+        viewBox="0 0 696 316"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M-380 -189C-380 -189 -312 216 152 343C616 470 684 875 684 875"
+          stroke={`url(#${radialId})`}
+          stroke-opacity="0.05"
+          stroke-width="0.5"
+        ></path>
+        <defs>
+          <radialGradient
+            id={radialId}
+            cx="0"
+            cy="0"
+            r="1"
+            gradientUnits="userSpaceOnUse"
+            gradientTransform="translate(352 34) rotate(90) scale(555 1560.62)"
+          >
+            <stop offset="0.0666667" stop-color="#d1d5db"></stop>
+            <stop offset="0.243243" stop-color="#d1d5db"></stop>
+            <stop offset="0.43594" stop-color="white" stop-opacity="0"></stop>
+          </radialGradient>
+        </defs>
+      </svg>
+    </div>
+  </div>
+  <slot />
+</div>
+
+<style>
+  .om-background-beams {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+
+    .om-background-beams-background {
+      position: absolute;
+      width: 150%;
+      height: 120%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+
+    .custom-svg-wrapper {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      mask-size: 40px;
+      mask-repeat: no-repeat;
+    }
+
+    .custom-svg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const els = document.querySelectorAll<HTMLElement>('[data-om-beams]');
+    if (!els.length) return;
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+
+    const firstPath = {
+      mX1: -380, mY1: -189, cX1: -380, cY1: -189, cX2: -312, cY2: 216,
+      cX3: 152, cY3: 343, cX4: 616, cY4: 470, cX5: 684, cY5: 875,
+    };
+    const lastPath = {
+      mX1: -37, mY1: -581, cX1: -37, cY1: -581, cX2: 31, cY2: -176,
+      cX3: 495, cY3: -49, cX4: 959, cY4: 78, cX5: 1027, cY5: 483,
+    };
+
+    els.forEach((el) => {
+      const uid = el.dataset.uid!;
+      const colors = JSON.parse(el.dataset.colors!) as string[];
+      const pathColor = el.dataset.pathColor ?? '#00000025';
+      const pathQuantity = Number(el.dataset.pathQty) || 50;
+      let resumeMode = el.dataset.resume === 'true';
+
+      const svg = el.querySelector<SVGSVGElement>('svg.custom-svg')!;
+      const defs = svg.querySelector('defs')!;
+
+      // ---- Estado compartido por ambos motores ----
+      const st: {
+        inViewport: boolean;
+        x1: string[];
+        x2: string[];
+        y1: string[];
+        y2: string[];
+        delays: number[];
+        durations: number[];
+      } = {
+        inViewport: false,
+        x1: [], x2: [], y1: [], y2: [], delays: [], durations: [],
+      };
+
+      const rafIds: number[] = [];
+      const timerIds: ReturnType<typeof setTimeout>[] = [];
+
+      function clearTimers(): void {
+        timerIds.splice(0).forEach((t) => clearTimeout(t));
+      }
+
+      function clearRaf(): void {
+        rafIds.splice(0).forEach((id) => cancelAnimationFrame(id));
+      }
+
+      function setTimer(fn: () => void, ms: number): void {
+        timerIds.push(setTimeout(fn, ms));
+      }
+
+      function generatePaths(): void {
+        el.querySelectorAll('[data-om-dyn]').forEach((n) => n.remove());
+
+        st.x1 = [];
+        st.x2 = [];
+        st.y1 = [];
+        st.y2 = [];
+        st.delays = [];
+        st.durations = [];
+
+        // El haz de curvas es una traslación pura de la misma "S" a lo largo
+        // del vector (343,-392). Con t ∈ [0,1] el área visible queda sin
+        // cobertura en la esquina inferior-izquierda (y una banda vacía).
+        // Extendemos el rango a [-0.2, 1] manteniendo el paso original, lo
+        // que desplaza curvas a esa esquina sin cambiar la densidad del haz.
+        const T_MIN = -0.2;
+        const tStep = pathQuantity > 1 ? 1 / (pathQuantity - 1) : 1;
+        const count = pathQuantity > 1 ? Math.round((1 - T_MIN) / tStep) + 1 : 1;
+
+        for (let i = 0; i < count; i++) {
+          const t = count > 1 ? T_MIN + i * tStep : 0;
+
+          const mX1 = firstPath.mX1 + t * (lastPath.mX1 - firstPath.mX1);
+          const mY1 = firstPath.mY1 + t * (lastPath.mY1 - firstPath.mY1);
+          const cX1 = firstPath.cX1 + t * (lastPath.cX1 - firstPath.cX1);
+          const cY1 = firstPath.cY1 + t * (lastPath.cY1 - firstPath.cY1);
+          const cX2 = firstPath.cX2 + t * (lastPath.cX2 - firstPath.cX2);
+          const cY2 = firstPath.cY2 + t * (lastPath.cY2 - firstPath.cY2);
+          const cX3 = firstPath.cX3 + t * (lastPath.cX3 - firstPath.cX3);
+          const cY3 = firstPath.cY3 + t * (lastPath.cY3 - firstPath.cY3);
+          const cX4 = firstPath.cX4 + t * (lastPath.cX4 - firstPath.cX4);
+          const cY4 = firstPath.cY4 + t * (lastPath.cY4 - firstPath.cY4);
+          const cX5 = firstPath.cX5 + t * (lastPath.cX5 - firstPath.cX5);
+          const cY5 = firstPath.cY5 + t * (lastPath.cY5 - firstPath.cY5);
+
+          const d =
+            `M${mX1} ${mY1}` +
+            `C${cX1} ${cY1} ${cX2} ${cY2} ${cX3} ${cY3}` +
+            `C${cX4} ${cY4} ${cX5} ${cY5} ${cX5} ${cY5}`;
+
+          const p1 = document.createElementNS(SVG_NS, 'path');
+          p1.setAttribute('d', d);
+          p1.setAttribute('stroke', pathColor);
+          p1.setAttribute('stroke-opacity', '1');
+          p1.setAttribute('stroke-width', '0.5');
+          p1.setAttribute('data-om-dyn', '1');
+          p1.setAttribute('data-om-dyn-type', 'color');
+
+          const p2 = document.createElementNS(SVG_NS, 'path');
+          p2.setAttribute('d', d);
+          p2.setAttribute('stroke', `url(#lg-${uid}-${i})`);
+          p2.setAttribute('stroke-opacity', '1');
+          p2.setAttribute('stroke-width', '0.5');
+          p2.setAttribute('data-om-dyn', '1');
+          p2.setAttribute('data-om-dyn-type', 'gradient');
+          p2.setAttribute('data-om-index', String(i));
+
+          svg.appendChild(p1);
+          svg.appendChild(p2);
+
+          const lg = document.createElementNS(SVG_NS, 'linearGradient');
+          lg.setAttribute('id', `lg-${uid}-${i}`);
+          lg.setAttribute('data-om-dyn', '1');
+          // Inicializa el gradiente vacío (0%): sin esto SVG los hace
+          // x1=0%,y1=0%,x2=100%,y2=0% → línea completa "llena" hasta
+          // que vene el delay. Igual que NGXUI, que bindea 0% desde el inicio.
+          lg.setAttribute('x1', '0%');
+          lg.setAttribute('x2', '0%');
+          lg.setAttribute('y1', '0%');
+          lg.setAttribute('y2', '0%');
+          lg.innerHTML =
+            `<stop stop-color="${colors[0]}" stop-opacity="0"></stop>` +
+            `<stop stop-color="${colors[0]}"></stop>` +
+            `<stop offset="32.5%" stop-color="${colors[1]}"></stop>` +
+            `<stop offset="100%" stop-color="${colors[2]}" stop-opacity="0"></stop>`;
+          defs.appendChild(lg);
+
+          st.x1.push('0%');
+          st.x2.push('0%');
+          st.y1.push('0%');
+          st.y2.push('0%');
+          st.delays.push(Math.random() * 10);
+          st.durations.push(Math.random() * 10 + 10);
+        }
+      }
+
+      function commit(index: number): void {
+        const g = document.getElementById(`lg-${uid}-${index}`);
+        if (!g) return;
+        g.setAttribute('x1', st.x1[index]);
+        g.setAttribute('x2', st.x2[index]);
+        g.setAttribute('y1', st.y1[index]);
+        g.setAttribute('y2', st.y2[index]);
+      }
+
+      // ---- Motor A: 1:1 con NGXUI (restart desde 0) ----
+
+      function animateGradient(index: number, duration: number): void {
+        if (rafIds[index]) cancelAnimationFrame(rafIds[index]);
+
+        const startTime = performance.now();
+        const randomY2Value = 93 + Math.random() * 8;
+
+        const animate = (currentTime: number) => {
+          if (!st.inViewport) return;
+
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+
+          st.x1[index] = `${progress * 100}%`;
+          st.x2[index] = `${progress * 95}%`;
+          st.y1[index] = `${progress * 100}%`;
+          st.y2[index] = `${progress * randomY2Value}%`;
+
+          commit(index);
+
+          if (progress < 1) {
+            rafIds[index] = requestAnimationFrame(animate);
+          } else {
+            restartAnimation(index, duration);
+          }
+        };
+
+        rafIds[index] = requestAnimationFrame(animate);
+      }
+
+      function restartAnimation(index: number, duration: number): void {
+        setTimer(() => {
+          st.x1[index] = '0%';
+          st.x2[index] = '0%';
+          st.y1[index] = '0%';
+          st.y2[index] = '0%';
+          commit(index);
+          animateGradient(index, duration);
+        }, Math.random() * 10000);
+      }
+
+      function startAnimations(): void {
+        for (let i = 0; i < st.delays.length; i++) {
+          setTimer(() => animateGradient(i, st.durations[i] * 1000), st.delays[i] * 1000);
+        }
+      }
+
+      // ---- Motor B: pausa/reanuda en el sitio ----
+
+      interface Phase {
+        state: 0 | 1 | 2; // 0 delay, 1 animate, 2 wait
+        start: number;
+        dur: number;
+        y2v: number;
+      }
+
+      let phases: Phase[] = [];
+      let engineRunning = false;
+      let engineRaf = 0;
+      let pausedAt = 0;
+      let hasEntered = false;
+
+      function initPhases(now: number): void {
+        phases = [];
+        for (let i = 0; i < st.delays.length; i++) {
+          phases.push({ state: 0, start: now, dur: st.delays[i] * 1000, y2v: 0 });
+        }
+      }
+
+      // Continúa la animación desde el progreso actual del motor A.
+      function adoptCurrentProgress(now: number): void {
+        phases = [];
+        for (let i = 0; i < st.delays.length; i++) {
+          const x1v = parseFloat(st.x1[i]) || 0; // 0..100
+          const progress = x1v / 100;
+          if (progress <= 0) {
+            phases.push({ state: 0, start: now, dur: st.delays[i] * 1000, y2v: 0 });
+          } else {
+            const y2p = parseFloat(st.y2[i]) || 0;
+            const y2v = progress > 0.001 ? Math.max(0.001, y2p / progress) : 93 + Math.random() * 8;
+            phases.push({
+              state: 1,
+              start: now - progress * (st.durations[i] * 1000),
+              dur: st.durations[i] * 1000,
+              y2v,
+            });
+          }
+        }
+        hasEntered = true;
+      }
+
+      function tick(now: number): void {
+        if (!engineRunning) return;
+
+        for (let i = 0; i < st.delays.length; i++) {
+          const ph = phases[i];
+          let elapsed = now - ph.start;
+
+          if (ph.state === 0 || ph.state === 2) {
+            if (elapsed < ph.dur) continue;
+            // Fase de espera terminada: reinicia a 0% y arranca la animación.
+            st.x1[i] = '0%';
+            st.x2[i] = '0%';
+            st.y1[i] = '0%';
+            st.y2[i] = '0%';
+            commit(i);
+            ph.state = 1;
+            ph.start = now;
+            ph.dur = st.durations[i] * 1000;
+            ph.y2v = 93 + Math.random() * 8;
+            elapsed = 0;
+          }
+
+          const progress = Math.min(elapsed / ph.dur, 1);
+
+          st.x1[i] = `${progress * 100}%`;
+          st.x2[i] = `${progress * 95}%`;
+          st.y1[i] = `${progress * 100}%`;
+          st.y2[i] = `${progress * ph.y2v}%`;
+          commit(i);
+
+          if (progress >= 1) {
+            // Mantiene el estado "relleno" durante la espera (como el original).
+            ph.state = 2;
+            ph.start = now;
+            ph.dur = Math.random() * 10000;
+          }
+        }
+
+        engineRaf = requestAnimationFrame(tick);
+      }
+
+      function playEngine(): void {
+        if (engineRunning) return;
+        const now = performance.now();
+        if (!hasEntered) {
+          initPhases(now);
+          hasEntered = true;
+        } else if (pausedAt > 0) {
+          const delta = now - pausedAt;
+          phases.forEach((p) => (p.start += delta));
+          pausedAt = 0;
+        }
+        engineRunning = true;
+        engineRaf = requestAnimationFrame(tick);
+      }
+
+      function stopEngine(): void {
+        if (!engineRunning) return;
+        engineRunning = false;
+        cancelAnimationFrame(engineRaf);
+        pausedAt = performance.now();
+      }
+
+      generatePaths();
+
+      let currentlyVisible = false;
+      let observerTimeout: ReturnType<typeof setTimeout> | undefined;
+      const observer = new IntersectionObserver(([entry]) => {
+        clearTimeout(observerTimeout);
+        observerTimeout = setTimeout(() => {
+          currentlyVisible = entry.isIntersecting;
+          if (entry.isIntersecting) {
+            if (resumeMode) {
+              playEngine();
+            } else {
+              st.inViewport = true;
+              clearTimers();
+              clearRaf();
+              startAnimations();
+            }
+          } else {
+            if (resumeMode) {
+              stopEngine();
+            } else {
+              st.inViewport = false;
+              clearTimers();
+              clearRaf();
+              generatePaths();
+            }
+          }
+        }, 100);
+      });
+
+      observer.observe(el);
+
+      const attrObserver = new MutationObserver((muts) => {
+        for (const m of muts) {
+          if (m.attributeName === 'data-colors') {
+            let colors: string[];
+            try {
+              colors = JSON.parse(el.dataset.colors!);
+            } catch {
+              return;
+            }
+            for (let i = 0; i < st.delays.length; i++) {
+              const lg = document.getElementById(`lg-${uid}-${i}`);
+              if (!lg) continue;
+              const stops = lg.children;
+              stops[0]?.setAttribute('stop-color', colors[0]);
+              stops[1]?.setAttribute('stop-color', colors[0]);
+              stops[2]?.setAttribute('stop-color', colors[1]);
+              stops[3]?.setAttribute('stop-color', colors[2]);
+            }
+          } else if (m.attributeName === 'data-path-color') {
+            const c = el.dataset.pathColor ?? '#00000025';
+            el.querySelectorAll('path[data-om-dyn-type="color"]').forEach((p) =>
+              p.setAttribute('stroke', c),
+            );
+          } else if (m.attributeName === 'data-resume') {
+            // Cambio de modo en caliente (solo demo/Color lab).
+            const wantResume = el.dataset.resume === 'true';
+            if (wantResume === resumeMode) return;
+            resumeMode = wantResume;
+
+            clearTimers();
+            clearRaf();
+
+            if (resumeMode) {
+              // A → B: adoptar el progreso actual y pausar/reanudar desde ahí.
+              st.inViewport = false;
+              if (engineRunning) stopEngine();
+              adoptCurrentProgress(performance.now());
+              if (!currentlyVisible) pausedAt = performance.now();
+              if (currentlyVisible) playEngine();
+            } else {
+              // B → A: volver al comportamiento 1:1 (reinicia desde 0 al entrar).
+              stopEngine();
+              st.inViewport = true;
+              startAnimations();
+            }
+          }
+        }
+      });
+      attrObserver.observe(el, {
+        attributes: true,
+        attributeFilter: ['data-colors', 'data-path-color', 'data-resume'],
+      });
+    });
+  })();
+</script>

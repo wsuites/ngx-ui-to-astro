@@ -1,0 +1,29 @@
+{
+  "name": "ngx-astro-timeline",
+  "version": "1.0.0",
+  "description": "Timeline effect for Astro. Port of @omnedia/ngx-timeline without Angular runtime.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/Timeline.astro",
+    "./Timeline.astro": "./src/Timeline.astro"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "astro": ">=5.0.0"
+  },
+  "keywords": [
+    "astro",
+    "astro-component",
+    "timeline",
+    "effect",
+    "scroll",
+    "animation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wsuites/ngx-ui-to-astro.git"
+  }
+}

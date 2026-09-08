@@ -1,0 +1,27 @@
+{
+  "name": "ngx-ui-to-astro",
+  "version": "0.1.0",
+  "description": "Monorepo: port to Astro of selected @omnedia NGXUI effects (background-beams, dark-veil, flickering-grid, word-morph, highlighter, timeline, shine-border) without any Angular runtime.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "ogl": "^1.0.11",
+    "rough-notation": "^0.5.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "astro": "^7.3.1",
+    "typescript": "^5.6.0"
+  }
+}

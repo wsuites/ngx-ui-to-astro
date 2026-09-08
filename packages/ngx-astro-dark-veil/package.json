@@ -1,0 +1,33 @@
+{
+  "name": "ngx-astro-dark-veil",
+  "version": "1.0.0",
+  "description": "Dark veil WebGL effect for Astro. Port of @omnedia/ngx-dark-veil without Angular runtime.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/DarkVeil.astro",
+    "./DarkVeil.astro": "./src/DarkVeil.astro"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "ogl": "^1.0.11"
+  },
+  "peerDependencies": {
+    "astro": ">=5.0.0"
+  },
+  "keywords": [
+    "astro",
+    "astro-component",
+    "webgl",
+    "dark-veil",
+    "effect",
+    "animation",
+    "shader"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wsuites/ngx-ui-to-astro.git"
+  }
+}

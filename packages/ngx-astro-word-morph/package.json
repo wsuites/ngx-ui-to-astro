@@ -1,0 +1,29 @@
+{
+  "name": "ngx-astro-word-morph",
+  "version": "1.0.0",
+  "description": "Word morph effect for Astro. Port of @omnedia/ngx-word-morph without Angular runtime.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/WordMorph.astro",
+    "./WordMorph.astro": "./src/WordMorph.astro"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "astro": ">=5.0.0"
+  },
+  "keywords": [
+    "astro",
+    "astro-component",
+    "word-morph",
+    "effect",
+    "animation",
+    "morph"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wsuites/ngx-ui-to-astro.git"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "ngx-astro-highlighter",
+  "version": "1.0.0",
+  "description": "Text highlighter effect for Astro. Port of @omnedia/ngx-highlighter without Angular runtime.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/Highlighter.astro",
+    "./Highlighter.astro": "./src/Highlighter.astro"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "rough-notation": "^0.5.1"
+  },
+  "peerDependencies": {
+    "astro": ">=5.0.0"
+  },
+  "keywords": [
+    "astro",
+    "astro-component",
+    "highlighter",
+    "rough-notation",
+    "effect",
+    "annotation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wsuites/ngx-ui-to-astro.git"
+  }
+}
